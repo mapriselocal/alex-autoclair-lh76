@@ -1309,19 +1309,19 @@
       }
     }
   
-    /* FINAL MOBILE FIX 2: logo ok, home cards restored, inner service photos not cropped */
+    /* FINAL MOBILE FIX 3: logo slightly lower, service photos full visible, homepage cards untouched */
     @media (max-width: 700px) {
-      /* approved mobile home logo */
+      /* mobile home logo: same size, 10% lower */
       .hero-logo {
         width: 207px !important;
         max-width: 52vw !important;
         margin: 0 0 8px !important;
         position: relative !important;
         left: -42px !important;
-        top: -75px !important;
+        top: -54px !important;
       }
 
-      /* restore homepage service cards */
+      /* homepage service cards stay in original style */
       .service-card-image {
         padding: 0 !important;
       }
@@ -1334,10 +1334,10 @@
         transform: none !important;
       }
 
-      /* service pages: show the service photo as a real full image, not a cropped background */
+      /* inner service pages: photo is fully visible, not cropped */
       .service-page .service-hero {
         min-height: auto !important;
-        padding: 54px 0 52px !important;
+        padding: 34px 0 44px !important;
         background: #071830 !important;
         overflow: hidden !important;
       }
@@ -1346,11 +1346,12 @@
         position: relative !important;
         inset: auto !important;
         display: block !important;
-        width: calc(100% - 64px) !important;
+        width: calc(100% - 52px) !important;
         max-width: 560px !important;
         height: auto !important;
-        margin: 0 auto 34px !important;
+        margin: 0 auto 18px !important;
         transform: none !important;
+        z-index: 0 !important;
       }
 
       .service-page .service-hero picture img,
@@ -1377,8 +1378,8 @@
       .service-page .service-hero::before {
         pointer-events: none !important;
         background:
-          linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 26%),
-          linear-gradient(0deg, rgba(7,24,48,0.94) 0%, rgba(7,24,48,0.50) 45%, rgba(7,24,48,0.08) 100%) !important;
+          linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 24%),
+          linear-gradient(0deg, rgba(7,24,48,0.92) 0%, rgba(7,24,48,0.46) 46%, rgba(7,24,48,0.06) 100%) !important;
       }
     }
 
@@ -1613,7 +1614,7 @@
   <section class="service-page" id="page-diagnostic">
     <div class="service-hero">
       <picture>
-        <source media="(max-width: 700px)" srcset="assets/04-диагностика/диагностика-телефон.webp" />
+        <!-- mobile uses desktop image here to avoid cropping -->
         <img src="assets/04-диагностика/диагностика-компьютер.webp" alt="Diagnostic auto sur place" />
       </picture>
       <div class="service-hero-content">
@@ -1629,7 +1630,7 @@
   <section class="service-page" id="page-inspection">
     <div class="service-hero">
       <picture>
-        <source media="(max-width: 700px)" srcset="assets/05-проверка-перед-покупкой/проверка-телефон.webp" />
+        <!-- mobile uses desktop image here to avoid cropping -->
         <img src="assets/05-проверка-перед-покупкой/проверка-компьютер.webp" alt="Inspection auto avant achat" />
       </picture>
       <div class="service-hero-content">
@@ -1643,7 +1644,7 @@
   <section class="service-page" id="page-search">
     <div class="service-hero">
       <picture>
-        <source media="(max-width: 700px)" srcset="assets/06-подбор-авто/подбор-телефон.webp" />
+        <!-- mobile uses desktop image here to avoid cropping -->
         <img src="assets/06-подбор-авто/подбор-компьютер.webp" alt="Recherche auto sur mesure" />
       </picture>
       <div class="service-hero-content">
@@ -1659,7 +1660,7 @@
   <section class="service-page" id="page-keys">
     <div class="service-hero">
       <picture>
-        <source media="(max-width: 700px)" srcset="assets/07-ключи/автоключи-капот-телефон.webp" />
+        <!-- mobile uses desktop image here to avoid cropping -->
         <img src="assets/07-ключи/автоключи-капот-компьютер.webp" alt="Double de clé auto et programmation" />
       </picture>
       <div class="service-hero-content">
@@ -1906,7 +1907,18 @@
       document.body.classList.remove("modal-open");
     }
 
-    function showServicePage(service) {
+    function closeServicePages(scrollTarget = "services") {
+      document.querySelectorAll(".service-page").forEach(page => {
+        page.classList.remove("active");
+      });
+
+      const target = document.getElementById(scrollTarget) || document.getElementById("home");
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+
+    function showServicePage(service, addToHistory = true) {
       document.querySelectorAll(".service-page").forEach(page => {
         page.classList.remove("active");
       });
@@ -1915,6 +1927,10 @@
       if (page) {
         page.classList.add("active");
         page.scrollIntoView({ behavior: "smooth" });
+
+        if (addToHistory) {
+          history.pushState({ service: service }, "", "#service-" + service);
+        }
       }
     }
 
@@ -1931,20 +1947,31 @@
 
     document.querySelectorAll("[data-service]").forEach(card => {
       card.addEventListener("click", () => {
-        showServicePage(card.dataset.service);
+        showServicePage(card.dataset.service, true);
       });
     });
-document.querySelectorAll("[data-go-home]").forEach(link => {
-  link.addEventListener("click", event => {
-    event.preventDefault();
 
-    document.querySelectorAll(".service-page").forEach(page => {
-      page.classList.remove("active");
+    document.querySelectorAll("[data-go-home]").forEach(link => {
+      link.addEventListener("click", event => {
+        event.preventDefault();
+        closeServicePages("home");
+        if (location.hash) {
+          history.pushState(null, "", location.pathname + location.search);
+        }
+      });
     });
 
-    document.getElementById("home").scrollIntoView({ behavior: "smooth" });
-  });
-});
+    window.addEventListener("popstate", event => {
+      const activeService = document.querySelector(".service-page.active");
+      if (activeService && (!event.state || !event.state.service)) {
+        closeServicePages("services");
+        return;
+      }
+
+      if (event.state && event.state.service) {
+        showServicePage(event.state.service, false);
+      }
+    });
     document.getElementById("modal-close").addEventListener("click", closeModal);
 
     document.getElementById("contact-modal").addEventListener("click", event => {
