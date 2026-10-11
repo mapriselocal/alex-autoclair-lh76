@@ -34,21 +34,24 @@ jobs:
       - name: Generate optimized WebP copies
         run: node .github/scripts/optimize-images.mjs
 
-      - name: Commit optimized images
+      - name: Update HTML to use available WebP files
+        run: node .github/scripts/update-webp-links.mjs
+
+      - name: Commit optimized images and updated links
         run: |
-          if [ -z "$(git status --porcelain -- assets)" ]; then
-            echo "No image changes."
+          if [ -z "$(git status --porcelain -- assets '*.html')" ]; then
+            echo "No image or HTML changes."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- ':(glob)assets/**/*.webp'
+          git add -- ':(glob)assets/**/*.webp' ':(glob)**/*.html'
 
           if git diff --cached --quiet; then
-            echo "No optimized image changes to commit."
+            echo "No optimized image or HTML changes to commit."
             exit 0
           fi
 
-          git commit -m "chore: optimize images [skip ci]"
+          git commit -m "chore: optimize images and update WebP links [skip ci]"
           git push
