@@ -266,6 +266,9 @@
     }
 
     .service-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
       height: 390px;
       border-radius: 32px;
       overflow: hidden;
@@ -1431,7 +1434,7 @@
       <h2 class="section-title" data-fr="Choisissez le service" data-en="Choose your service" data-ru="Выберите услугу">Choisissez le service</h2>
 
       <div class="services-grid">
-        <article class="service-card" data-service="diagnostic">
+        <a class="service-card" data-service="diagnostic" href="/diagnostic-auto-le-havre/">
           <div class="service-card-image">
             <img src="assets/03-карточки-услуг/карточка-диагностика.png" alt="Diagnostic auto" />
           </div>
@@ -1439,9 +1442,9 @@
             <h3 data-fr="Diagnostic auto" data-en="Car diagnostic" data-ru="Диагностика авто">Diagnostic auto</h3>
             <p data-fr="Comprendre le problème" data-en="Understand the problem" data-ru="Понять проблему">Comprendre le problème</p>
           </div>
-        </article>
+        </a>
 
-        <article class="service-card" data-service="inspection">
+        <a class="service-card" data-service="inspection" href="/inspection-auto-avant-achat-le-havre/">
           <div class="service-card-image">
             <img src="assets/03-карточки-услуг/карточка-проверка-перед-покупкой.png" alt="Inspection avant achat" />
           </div>
@@ -1449,9 +1452,9 @@
             <h3 data-fr="Inspection avant achat" data-en="Pre-purchase inspection" data-ru="Проверка перед покупкой">Inspection avant achat</h3>
             <p data-fr="Vérifier avant décision" data-en="Check before deciding" data-ru="Проверить перед решением">Vérifier avant décision</p>
           </div>
-        </article>
+        </a>
 
-        <article class="service-card" data-service="search">
+        <a class="service-card" data-service="search" href="/recherche-auto-sur-mesure-le-havre/">
           <div class="service-card-image">
             <img src="assets/03-карточки-услуг/карточка-подбор-авто.png" alt="Recherche auto" />
           </div>
@@ -1459,9 +1462,9 @@
             <h3 data-fr="Recherche auto" data-en="Custom car search" data-ru="Подбор авто">Recherche auto</h3>
             <p data-fr="Trouver le bon véhicule" data-en="Find the right car" data-ru="Найти подходящий автомобиль">Trouver le bon véhicule</p>
           </div>
-        </article>
+        </a>
 
-        <article class="service-card" data-service="keys">
+        <a class="service-card" data-service="keys" href="/cles-auto-le-havre/">
           <div class="service-card-image">
             <img src="assets/03-карточки-услуг/карточка-автоключи.png" alt="Clés auto" />
           </div>
@@ -1469,7 +1472,7 @@
             <h3 data-fr="Clés auto" data-en="Car keys" data-ru="Автоключи">Clés auto</h3>
             <p data-fr="Double de clé et programmation" data-en="Key duplication and programming" data-ru="Дубликат и программирование">Double de clé et programmation</p>
           </div>
-        </article>
+        </a>
       </div>
     </section>
 
@@ -1946,7 +1949,12 @@
     });
 
     document.querySelectorAll("[data-service]").forEach(card => {
-      card.addEventListener("click", () => {
+      card.addEventListener("click", event => {
+        if (currentLang === "fr") {
+          return;
+        }
+
+        event.preventDefault();
         showServicePage(card.dataset.service, true);
       });
     });
