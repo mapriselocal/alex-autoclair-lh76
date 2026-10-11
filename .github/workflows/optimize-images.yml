@@ -1,0 +1,48 @@
+name: Optimize images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/**/*.png"
+      - "assets/**/*.jpg"
+      - "assets/**/*.jpeg"
+      - ".github/scripts/optimize-images.mjs"
+      - ".github/workflows/optimize-images.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install image optimizer
+        run: npm install --no-save --package-lock=false sharp@0.33.5
+
+      - name: Generate optimized WebP copies
+        run: node .github/scripts/optimize-images.mjs
+
+      - name: Commit optimized images
+        run: |
+          if git diff --quiet && [ -z "$(git status --porcelain)" ]; then
+            echo "No image changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/**/*.webp
+          git commit -m "chore: optimize images [skip ci]"
+          git push
