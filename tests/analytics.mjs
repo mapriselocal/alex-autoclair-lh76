@@ -251,7 +251,7 @@ try {
     await other.locator('[data-aac-accept]').click();
     await page.waitForFunction(() => !!window.__gaCalls && window.__gaCalls.find(a => a[0] === 'config')?.[2]?.allow_google_signals === false);
     assert.doesNotMatch(await page.evaluate(() => document.cookie), /_gcl_au=/);
-    await other.waitForFunction(() => !!window.__gaCalls);
+    await other.waitForFunction(() => !!window.__gaCalls && window.__gaCalls.find(a => a[0] === 'config')?.[2]?.allow_google_signals === false);
     await other.locator('.aac-privacy-footer button').click();
     await other.locator('[data-aac-reject]').click();
     await page.waitForFunction(() => typeof window.gtag === 'undefined');
@@ -284,7 +284,7 @@ try {
         const audience = await page.locator('[data-aac-audience]').boundingBox();
         assert.equal(audience.height, a.height);
         assert.ok(Math.abs(audience.width - a.width) < 1);
-        await page.locator('.aac-consent summary').click();
+        await page.locator('.aac-consent details').evaluate(el => { el.open = true; });
         assert.equal(await page.locator('.aac-consent a[href="https://myactivity.google.com/"]').isVisible(), true);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
         await page.screenshot({ path: `${process.env.TEST_SCREENSHOT_DIR || '/tmp'}/consent-${viewport.width}-${lang}.png`, animations: 'disabled' });
