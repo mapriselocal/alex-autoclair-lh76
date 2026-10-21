@@ -30,6 +30,7 @@ async function setup(options = {}) {
         };
         document.cookie = '_ga=test; path=/';
         document.cookie = '_ga_B87WS82CYV=test; path=/';
+        if (window.__gaCalls.find(a => a[0] === 'config')?.[2]?.allow_google_signals) document.cookie = '_gcl_au=test; path=/';
       ` });
     }
     return route.abort();
@@ -85,8 +86,10 @@ try {
       assert.equal((await events(page, 'page_view')).length, 1);
       assert.equal((await events(page, 'service_view')).length, index ? 1 : 0);
       assert.equal(all.find(a => a[0] === 'config')[2].send_page_view, false);
+      assert.equal(all.find(a => a[0] === 'config')[2].allow_google_signals, false);
+      assert.equal(all.find(a => a[0] === 'config')[2].allow_ad_personalization_signals, false);
       assert.equal(all.find(a => a[0] === 'consent' && a[1] === 'default')[2].ad_storage, 'denied');
-      assert.deepEqual(all.find(a => a[0] === 'consent' && a[1] === 'update')[2], { analytics_storage: 'granted' });
+      assert.deepEqual(all.find(a => a[0] === 'consent' && a[1] === 'update')[2], { analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
       await page.locator('.aac-privacy-footer button').click();
       await page.locator('[data-aac-accept]').click();
       assert.equal((await events(page, 'page_view')).length, 1);
@@ -182,6 +185,79 @@ try {
     assert.equal(await page.evaluate(() => document.cookie), '');
   });
 
+
+  await check('Audience requires its explicit choice, persists on all pages, and keeps ad personalization disabled', async () => {
+    const { page, errors } = await setup();
+    await page.goto(root);
+    await page.locator('[data-aac-audience]').click();
+    await page.waitForFunction(() => !!window.__gaCalls);
+    for (const [index, path] of paths.entries()) {
+      if (index) { await page.goto(root + path); await page.waitForFunction(() => !!window.__gaCalls); }
+      const all = await calls(page);
+      assert.equal(all.filter(a => a[0] === 'config').length, 1);
+      const config = all.find(a => a[0] === 'config')[2];
+      assert.equal(config.allow_google_signals, true);
+      assert.equal(config.allow_ad_personalization_signals, false);
+      assert.deepEqual(all.find(a => a[0] === 'consent' && a[1] === 'update')[2],
+        { analytics_storage: 'granted', ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'denied' });
+      assert.equal((await events(page, 'page_view')).length, 1);
+    }
+    assert.deepEqual(errors, []);
+  });
+
+  await check('Audience upgrade and downgrade reload listeners; downgrade clears site advertising cookies and keeps analytics', async () => {
+    const { page } = await setup();
+    await page.goto(root);
+    await accept(page);
+    await page.locator('.aac-privacy-footer button').click();
+    await Promise.all([page.waitForEvent('load'), page.locator('[data-aac-audience]').click()]);
+    await page.waitForFunction(() => !!window.__gaCalls);
+    assert.equal((await calls(page)).find(a => a[0] === 'config')[2].allow_google_signals, true);
+    assert.match(await page.evaluate(() => document.cookie), /_gcl_au=/);
+    await page.locator('.aac-privacy-footer button').click();
+    await Promise.all([page.waitForEvent('load'), page.locator('[data-aac-accept]').click()]);
+    await page.waitForFunction(() => !!window.__gaCalls);
+    assert.equal((await calls(page)).find(a => a[0] === 'config')[2].allow_google_signals, false);
+    assert.doesNotMatch(await page.evaluate(() => document.cookie), /_gcl_au=/);
+    assert.equal((await events(page, 'page_view')).length, 1);
+  });
+
+  await check('Legacy consent is never upgraded to audience permission; invalid audience choices fail closed', async () => {
+    for (const value of [
+      { version: 1, accepted: true, at: Date.now() },
+      { version: 2, accepted: true, at: Date.now() },
+      { version: 2, accepted: false, audience: true, at: Date.now() },
+      { version: 2, accepted: true, audience: 'true', at: Date.now() },
+      { version: 2, accepted: true, audience: true, at: Date.now() - 181 * 86400000 }
+    ]) {
+      const { page, google } = await setup();
+      await page.goto(root);
+      await page.evaluate(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), { key, value });
+      await page.reload();
+      assert.equal(google.length, 0);
+      assert.equal(await page.locator('.aac-consent').isVisible(), true);
+    }
+  });
+
+  await check('Audience downgrade and withdrawal propagate to another open tab', async () => {
+    const { context, page } = await setup();
+    await page.goto(root);
+    await page.locator('[data-aac-audience]').click();
+    await page.waitForFunction(() => !!window.__gaCalls);
+    const other = await context.newPage();
+    await other.goto(root);
+    await other.waitForFunction(() => !!window.__gaCalls);
+    await other.locator('.aac-privacy-footer button').click();
+    await other.locator('[data-aac-accept]').click();
+    await page.waitForFunction(() => !!window.__gaCalls && window.__gaCalls.find(a => a[0] === 'config')?.[2]?.allow_google_signals === false);
+    assert.doesNotMatch(await page.evaluate(() => document.cookie), /_gcl_au=/);
+    await other.waitForFunction(() => !!window.__gaCalls);
+    await other.locator('.aac-privacy-footer button').click();
+    await other.locator('[data-aac-reject]').click();
+    await page.waitForFunction(() => typeof window.gtag === 'undefined');
+    assert.equal(await page.evaluate(() => document.cookie), '');
+  });
+
   await check('Banner fits mobile and desktop in all three languages, with equally sized accept/refuse controls', async () => {
     for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 1000 }]) {
       const { page } = await setup({ viewport });
@@ -205,6 +281,11 @@ try {
         const r = await page.locator('[data-aac-reject]').boundingBox();
         assert.equal(a.width, r.width);
         assert.equal(a.height, r.height);
+        const audience = await page.locator('[data-aac-audience]').boundingBox();
+        assert.equal(audience.height, a.height);
+        assert.ok(Math.abs(audience.width - a.width) < 1);
+        await page.locator('.aac-consent summary').click();
+        assert.equal(await page.locator('.aac-consent a[href="https://myactivity.google.com/"]').isVisible(), true);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
         await page.screenshot({ path: `${process.env.TEST_SCREENSHOT_DIR || '/tmp'}/consent-${viewport.width}-${lang}.png`, animations: 'disabled' });
       }

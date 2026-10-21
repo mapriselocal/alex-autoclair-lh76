@@ -5,7 +5,7 @@
 
   const ID = 'G-B87WS82CYV';
   const KEY = 'aac.analytics-consent.v1';
-  const VERSION = 1;
+  const VERSION = 2;
   const MAX_AGE = 180 * 24 * 60 * 60 * 1000;
   const services = {
     diagnostic: '/diagnostic-auto-le-havre/',
@@ -16,30 +16,31 @@
   const copy = {
     fr: {
       title: 'Votre choix pour les statistiques',
-      text: 'Alex AutoClair LH 76 utilise Google Analytics uniquement avec votre accord pour mesurer les visites, leur provenance et les clics de contact. Vous pouvez refuser : le site reste entièrement utilisable.',
+      text: 'Alex AutoClair LH 76 utilise Google Analytics avec votre accord pour mesurer les visites, leur provenance et les clics de contact. Vous pouvez autoriser les statistiques seules, ou aussi l’analyse démographique et des centres d’intérêt avec les signaux Google. Refuser ne limite aucune fonction du site.',
       details: 'En savoir plus',
-      info: 'Google Ireland Limited reçoit les données de navigation et les identifiants des cookies _ga et _ga_B87WS82CYV. Aucun texte saisi dans WhatsApp n’est transmis par nos événements. Le choix est mémorisé sur cet appareil pendant 180 jours. Vous pouvez le modifier ou retirer votre accord avec « Cookies et statistiques » en bas de page. Contact : alexautoclair76@outlook.com.',
-      policy: 'Confidentialité chez Google', accept: 'Accepter les statistiques',
-      reject: 'Refuser les statistiques', settings: 'Cookies et statistiques', close: 'Fermer'
+      info: 'Google Ireland Limited reçoit les données de navigation et les identifiants _ga et _ga_B87WS82CYV. Avec « Statistiques et audience », vous autorisez aussi l’utilisation d’identifiants et de cookies publicitaires pour associer ces visites aux informations des comptes Google connectés et consentants (âge, genre et intérêts agrégés). La personnalisation publicitaire reste désactivée par ce site. Nos événements ne transmettent ni texte WhatsApp, ni email ou téléphone saisi. Les cookies Google existants sont gérés par Google. Choix : 180 jours. Modifiez ou retirez votre accord avec « Cookies et statistiques » en bas de page ; gérez vos données Google dans « Mon activité ». Contact : alexautoclair76@outlook.com.',
+      policy: 'Confidentialité chez Google', activity: 'Mon activité Google', accept: 'Statistiques seulement', audience: 'Statistiques et audience',
+      reject: 'Tout refuser', settings: 'Cookies et statistiques', close: 'Fermer'
     },
     en: {
       title: 'Your choice about analytics',
-      text: 'Alex AutoClair LH 76 uses Google Analytics only with your permission to measure visits, traffic sources and contact clicks. You can refuse: the whole website remains available.',
+      text: 'Alex AutoClair LH 76 uses Google Analytics with your permission to measure visits, traffic sources and contact clicks. Allow basic analytics only, or also demographic and interest analysis using Google signals. Refusing does not limit any website feature.',
       details: 'Learn more',
-      info: 'Google Ireland Limited receives browsing data and identifiers from the _ga and _ga_B87WS82CYV cookies. Our events do not send text entered in WhatsApp. Your choice is saved on this device for 180 days. Change or withdraw it using “Cookies and analytics” at the bottom of the page. Contact: alexautoclair76@outlook.com.',
-      policy: 'Google privacy policy', accept: 'Accept analytics',
-      reject: 'Reject analytics', settings: 'Cookies and analytics', close: 'Close'
+      info: 'Google Ireland Limited receives browsing data and the _ga and _ga_B87WS82CYV identifiers. “Analytics and audience” also permits advertising cookies and identifiers to associate these visits with information from signed-in, consenting Google accounts (aggregated age, gender and interests). This website keeps ad personalization disabled. Our events do not send WhatsApp text or entered email addresses or phone numbers. Existing Google cookies are managed by Google. Your choice lasts 180 days. Change or withdraw it using “Cookies and analytics” at the bottom of the page; manage Google data in “My Activity”. Contact: alexautoclair76@outlook.com.',
+      policy: 'Google privacy policy', activity: 'Google My Activity', accept: 'Analytics only', audience: 'Analytics and audience',
+      reject: 'Reject all', settings: 'Cookies and analytics', close: 'Close'
     },
     ru: {
       title: 'Ваш выбор для статистики',
-      text: 'Alex AutoClair LH 76 использует Google Analytics только с вашего согласия для подсчёта посещений, источников переходов и нажатий на кнопки связи. Можно отказаться: все функции сайта останутся доступны.',
+      text: 'Alex AutoClair LH 76 использует Google Analytics с вашего согласия для подсчёта посещений, источников переходов и кликов контактов. Можно разрешить только статистику или дополнительно анализ демографии и интересов через сигналы Google. При отказе все функции сайта остаются доступны.',
       details: 'Подробнее',
-      info: 'Google Ireland Limited получает данные о посещениях и идентификаторы файлов cookie _ga и _ga_B87WS82CYV. Наши события не передают текст, введённый для WhatsApp. Выбор сохраняется на этом устройстве на 180 дней. Изменить его или отозвать согласие можно кнопкой «Cookie и статистика» внизу страницы. Контакт: alexautoclair76@outlook.com.',
-      policy: 'Конфиденциальность Google', accept: 'Разрешить статистику',
-      reject: 'Отказаться от статистики', settings: 'Cookie и статистика', close: 'Закрыть'
+      info: 'Google Ireland Limited получает данные о посещениях и идентификаторы _ga и _ga_B87WS82CYV. Вариант «Статистика и аудитория» также разрешает использование рекламных cookie и идентификаторов для связывания посещений с данными вошедших в аккаунт Google пользователей, давших согласие (обобщённые возраст, пол и интересы). Персонализация рекламы на этом сайте остаётся отключённой. Наши события не передают текст WhatsApp, введённые email или телефоны. Существующими cookie Google управляет Google. Выбор действует 180 дней. Изменить или отозвать его можно кнопкой «Cookie и статистика» внизу страницы; управление данными Google — в разделе «Мои действия». Контакт: alexautoclair76@outlook.com.',
+      policy: 'Конфиденциальность Google', activity: 'Мои действия Google', accept: 'Только статистика', audience: 'Статистика и аудитория',
+      reject: 'Отказаться от всего', settings: 'Cookie и статистика', close: 'Закрыть'
     }
   };
   let allowed = false;
+  let audienceAllowed = false;
   let started = false;
   let lastView = '';
   let panel;
@@ -54,6 +55,7 @@
     try {
       const value = JSON.parse(localStorage.getItem(KEY));
       if (value && value.version === VERSION && typeof value.accepted === 'boolean' &&
+          typeof value.audience === 'boolean' && (!value.audience || value.accepted) &&
           Number.isFinite(value.at) && value.at <= Date.now() && Date.now() - value.at < MAX_AGE) return value;
     } catch (_) { /* Storage may be unavailable; default to no collection. */ }
     return null;
@@ -64,7 +66,7 @@
     const host = location.hostname.split('.');
     const domains = [''];
     for (let i = 0; i < host.length - 1; i++) domains.push(host.slice(i).join('.'));
-    for (const name of names.filter(name => name === '_ga' || name.startsWith('_ga_'))) {
+    for (const name of names.filter(name => name === '_ga' || name.startsWith('_ga_') || name.startsWith('_gcl_') || name.startsWith('_gac_'))) {
       for (const domain of domains) {
         document.cookie = name + '=; Max-Age=0; Path=/' + (domain ? '; Domain=' + domain : '') + '; SameSite=Lax';
       }
@@ -130,10 +132,12 @@
     // The queue and Google script are created ONLY after opt-in (basic consent mode).
     window.gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied',
       ad_user_data: 'denied', ad_personalization: 'denied' });
-    window.gtag('consent', 'update', { analytics_storage: 'granted' });
+    window.gtag('consent', 'update', { analytics_storage: 'granted',
+      ad_storage: audienceAllowed ? 'granted' : 'denied',
+      ad_user_data: audienceAllowed ? 'granted' : 'denied', ad_personalization: 'denied' });
     window.gtag('js', new Date());
     window.gtag('config', ID, Object.assign({}, context(), {
-      send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false,
+      send_page_view: false, allow_google_signals: audienceAllowed, allow_ad_personalization_signals: false,
       cookie_expires: 15552000, cookie_update: false
     }));
     const script = document.createElement('script');
@@ -143,13 +147,21 @@
     trackView();
   }
 
-  function choose(accepted) {
-    try { localStorage.setItem(KEY, JSON.stringify({ version: VERSION, accepted, at: Date.now() })); } catch (_) {}
+  function choose(accepted, audience = false) {
+    audience = accepted && audience;
+    try { localStorage.setItem(KEY, JSON.stringify({ version: VERSION, accepted, audience, at: Date.now() })); } catch (_) {}
     const wasStarted = started;
+    const scopeChanged = audienceAllowed !== audience;
     allowed = accepted;
+    audienceAllowed = audience;
     panel.hidden = true;
     if (focusBeforePanel && focusBeforePanel.isConnected) focusBeforePanel.focus({ preventScroll: true });
-    if (accepted) start();
+    if (accepted && wasStarted && scopeChanged) {
+      // Reload to apply the new scope without retaining old Google listeners.
+      window['ga-disable-' + ID] = true;
+      clearAnalyticsCookies();
+      location.reload();
+    } else if (accepted) start();
     else {
       window['ga-disable-' + ID] = true;
       clearAnalyticsCookies();
@@ -178,9 +190,10 @@
     panel.setAttribute('aria-labelledby', 'aac-consent-title');
     panel.innerHTML = '<h2 id="aac-consent-title" data-aac-text="title"></h2>' +
       '<p data-aac-text="text"></p><details><summary data-aac-text="details"></summary>' +
-      '<p data-aac-text="info"></p><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" data-aac-text="policy"></a></details>' +
+      '<p data-aac-text="info"></p><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" data-aac-text="policy"></a> · <a href="https://myactivity.google.com/" target="_blank" rel="noopener noreferrer" data-aac-text="activity"></a></details>' +
       '<div class="aac-consent-actions"><button type="button" data-aac-reject data-aac-text="reject"></button>' +
       '<button type="button" data-aac-accept data-aac-text="accept"></button>' +
+      '<button type="button" data-aac-audience data-aac-text="audience"></button>' +
       '<button type="button" data-aac-close data-aac-text="close" hidden></button></div>';
     const footer = document.createElement('div');
     footer.className = 'aac-privacy-footer';
@@ -193,6 +206,7 @@
     updateCopy();
     panel.querySelector('[data-aac-accept]').addEventListener('click', () => choose(true));
     panel.querySelector('[data-aac-reject]').addEventListener('click', () => choose(false));
+    panel.querySelector('[data-aac-audience]').addEventListener('click', () => choose(true, true));
     panel.querySelector('[data-aac-close]').addEventListener('click', () => {
       panel.hidden = true;
       if (focusBeforePanel) focusBeforePanel.focus({ preventScroll: true });
@@ -200,6 +214,7 @@
     settings.addEventListener('click', showSettings);
     const choice = readChoice();
     allowed = choice ? choice.accepted : false;
+    audienceAllowed = !!(choice && choice.audience);
     panel.hidden = !!choice;
     if (allowed) start();
     else { window['ga-disable-' + ID] = true; clearAnalyticsCookies(); }
@@ -211,6 +226,15 @@
       if (event.key !== KEY && event.key !== null) return;
       const choice = readChoice();
       const next = !!(choice && choice.accepted);
+      const nextAudience = !!(choice && choice.audience);
+      if (next && allowed && nextAudience !== audienceAllowed) {
+        allowed = false;
+        window['ga-disable-' + ID] = true;
+        clearAnalyticsCookies();
+        location.reload();
+        return;
+      }
+      audienceAllowed = nextAudience;
       if (!next && allowed) {
         allowed = false;
         window['ga-disable-' + ID] = true;
