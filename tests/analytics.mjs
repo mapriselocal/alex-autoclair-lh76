@@ -188,6 +188,13 @@ try {
       await page.goto(root);
       for (const lang of ['fr', 'en', 'ru']) {
         await page.evaluate(lang => setLanguage(lang), lang);
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+          await Promise.all(Array.from(document.images)
+            .filter(image => image.getBoundingClientRect().top < innerHeight)
+            .map(image => image.decode().catch(() => {})));
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        });
         const panel = await page.locator('.aac-consent').boundingBox();
         assert.ok(panel.x >= 0 && panel.x + panel.width <= viewport.width);
         assert.ok(panel.y >= 0 && panel.y + panel.height <= viewport.height);
@@ -196,7 +203,7 @@ try {
         assert.equal(a.width, r.width);
         assert.equal(a.height, r.height);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-        await page.screenshot({ path: `${process.env.TEST_SCREENSHOT_DIR || '/tmp'}/consent-${viewport.width}-${lang}.png` });
+        await page.screenshot({ path: `${process.env.TEST_SCREENSHOT_DIR || '/tmp'}/consent-${viewport.width}-${lang}.png`, animations: 'disabled' });
       }
     }
   });
