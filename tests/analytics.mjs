@@ -191,7 +191,10 @@ try {
         await page.evaluate(async () => {
           await document.fonts.ready;
           await Promise.all(Array.from(document.images)
-            .filter(image => image.getBoundingClientRect().top < innerHeight)
+            .filter(image => {
+              const box = image.getBoundingClientRect();
+              return box.width > 0 && box.height > 0 && box.top < innerHeight && box.bottom > 0;
+            })
             .map(image => image.decode().catch(() => {})));
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         });
