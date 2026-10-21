@@ -1,4 +1,4 @@
-/* GA4 basic consent mode. Disable Enhanced Measurement before publishing; see docs/analytics.md. */
+/* GA4 basic consent mode. Disable automatic outbound clicks and history views; see docs/analytics.md. */
 (() => {
   'use strict';
   if (window.autoClairAnalytics) return;
