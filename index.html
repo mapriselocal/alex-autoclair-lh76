@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <link rel="stylesheet" href="/assets/css/analytics.css" />
+  <script defer src="/assets/js/analytics.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -1955,6 +1957,7 @@
         whatsapp.href = buildWhatsappLink(messageBox.value);
       };
 
+      modal.dataset.analyticsService = type;
       modal.classList.add("active");
       document.body.classList.add("modal-open");
       setTimeout(() => messageBox.focus(), 120);
@@ -1969,6 +1972,8 @@
       document.querySelectorAll(".service-page").forEach(page => {
         page.classList.remove("active");
       });
+
+      window.dispatchEvent(new Event("aac:view"));
 
       const target = document.getElementById(scrollTarget) || document.getElementById("home");
       if (target) {
@@ -1989,6 +1994,7 @@
         if (addToHistory) {
           history.pushState({ service: service }, "", "#service-" + service);
         }
+        window.dispatchEvent(new Event("aac:view"));
       }
     }
 
