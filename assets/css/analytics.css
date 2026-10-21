@@ -1,0 +1,52 @@
+.aac-consent {
+  position: fixed;
+  z-index: 10000;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  max-width: 720px;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  margin: 0 auto;
+  padding: 22px;
+  border: 1px solid #cad2df;
+  border-radius: 16px;
+  background: #fff;
+  color: #152033;
+  box-shadow: 0 12px 50px #07183040;
+  font: 15px/1.5 Arial, Helvetica, sans-serif;
+}
+.aac-consent[hidden], .aac-consent [hidden] { display: none; }
+.aac-consent h2 { font: bold 19px/1.3 Arial, Helvetica, sans-serif; margin: 0 0 10px; }
+.aac-consent p { margin: 0 0 12px; color: #152033; }
+.aac-consent summary { cursor: pointer; text-decoration: underline; margin-bottom: 10px; }
+.aac-consent a { color: #154d88; text-decoration: underline; }
+.aac-consent-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.aac-consent-actions button {
+  flex: 1 1 200px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #071830;
+  border-radius: 8px;
+  background: #071830;
+  color: #fff;
+  font: bold 15px/1.4 Arial, Helvetica, sans-serif;
+  cursor: pointer;
+}
+.aac-consent-actions button:hover { background: #16375d; }
+.aac-consent-actions button:focus-visible, .aac-consent summary:focus-visible,
+.aac-privacy-footer button:focus-visible { outline: 3px solid #2878d0; outline-offset: 3px; }
+.aac-privacy-footer { background: #071830; padding: 12px 20px; text-align: center; }
+.aac-privacy-footer button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: 14px/1.4 Arial, Helvetica, sans-serif;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (max-width: 480px) {
+  .aac-consent { left: 10px; right: 10px; bottom: 10px; padding: 18px; }
+}
