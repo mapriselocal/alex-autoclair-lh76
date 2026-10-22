@@ -322,6 +322,13 @@ try {
               return box.width > 0 && box.height > 0 && box.top < innerHeight && box.bottom > 0;
             }).map(image => image.decode().catch(() => {})));
         });
+        // Compare with the existing page: the banner must not introduce horizontal overflow.
+        const baselineWidth = await page.locator('.aac-consent').evaluate(el => {
+          el.hidden = true;
+          const width = document.documentElement.scrollWidth;
+          el.hidden = false;
+          return width;
+        });
         const panel = await page.locator('.aac-consent').boundingBox();
         assert.ok(panel.x >= 0 && panel.x + panel.width <= viewport.width);
         assert.ok(panel.y >= 0 && panel.y + panel.height <= viewport.height);
@@ -333,14 +340,16 @@ try {
         assert.ok(a.height >= 44);
         if (viewport.width <= 600) assert.equal(a.y, r.y);
         assert.equal(await page.locator('[data-aac-preferences]').isVisible(), false);
-        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        assert.ok(await page.evaluate(width => document.documentElement.scrollWidth <= width, baselineWidth));
+        assert.equal(await page.locator('.aac-consent').evaluate(el => el.scrollWidth <= el.clientWidth), true);
         await page.screenshot({ path: `${process.env.TEST_SCREENSHOT_DIR || '/tmp'}/consent-${viewport.width}-${lang}.png`, animations: 'disabled' });
         await page.locator('[data-aac-customize]').click();
         assert.equal(await page.locator('[data-aac-customize]').getAttribute('aria-expanded'), 'true');
         await page.locator('.aac-consent details').evaluate(el => { el.open = true; });
         await page.locator('.aac-consent a[href="https://myactivity.google.com/"]').scrollIntoViewIfNeeded();
         assert.equal(await page.locator('.aac-consent a[href="https://myactivity.google.com/"]').isVisible(), true);
-        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        assert.ok(await page.evaluate(width => document.documentElement.scrollWidth <= width, baselineWidth));
+        assert.equal(await page.locator('.aac-consent').evaluate(el => el.scrollWidth <= el.clientWidth), true);
         await page.screenshot({ path: `${process.env.TEST_SCREENSHOT_DIR || '/tmp'}/consent-settings-${viewport.width}-${lang}.png`, animations: 'disabled' });
         await page.reload();
       }
