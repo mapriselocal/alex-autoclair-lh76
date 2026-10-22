@@ -45,8 +45,14 @@ async function calls(page) {
 async function events(page, name) {
   return (await calls(page)).filter(args => args[0] === 'event' && args[1] === name);
 }
+async function selectAnalyticsOnly(page) {
+  if (!await page.locator('[data-aac-preferences]').isVisible()) await page.locator('[data-aac-customize]').click();
+  await page.locator('[data-aac-analytics-choice]').check();
+  await page.locator('[data-aac-audience-choice]').uncheck();
+  await page.locator('[data-aac-save]').click();
+}
 async function accept(page) {
-  await page.locator('[data-aac-accept]').click();
+  await selectAnalyticsOnly(page);
   await page.waitForFunction(() => !!window.__gaCalls);
 }
 async function check(name, fn) {
@@ -91,7 +97,7 @@ try {
       assert.equal(all.find(a => a[0] === 'consent' && a[1] === 'default')[2].ad_storage, 'denied');
       assert.deepEqual(all.find(a => a[0] === 'consent' && a[1] === 'update')[2], { analytics_storage: 'granted', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
       await page.locator('.aac-privacy-footer button').click();
-      await page.locator('[data-aac-accept]').click();
+      await selectAnalyticsOnly(page);
       assert.equal((await events(page, 'page_view')).length, 1);
     }
     assert.equal(google.filter(url => url.includes('/gtag/js')).length, 5);
@@ -215,7 +221,7 @@ try {
     assert.equal((await calls(page)).find(a => a[0] === 'config')[2].allow_google_signals, true);
     assert.match(await page.evaluate(() => document.cookie), /_gcl_au=/);
     await page.locator('.aac-privacy-footer button').click();
-    await Promise.all([page.waitForEvent('load'), page.locator('[data-aac-accept]').click()]);
+    await Promise.all([page.waitForEvent('load'), selectAnalyticsOnly(page)]);
     await page.waitForFunction(() => !!window.__gaCalls);
     assert.equal((await calls(page)).find(a => a[0] === 'config')[2].allow_google_signals, false);
     assert.doesNotMatch(await page.evaluate(() => document.cookie), /_gcl_au=/);
@@ -248,7 +254,7 @@ try {
     await other.goto(root);
     await other.waitForFunction(() => !!window.__gaCalls);
     await other.locator('.aac-privacy-footer button').click();
-    await other.locator('[data-aac-accept]').click();
+    await selectAnalyticsOnly(other);
     await page.waitForFunction(() => !!window.__gaCalls && window.__gaCalls.find(a => a[0] === 'config')?.[2]?.allow_google_signals === false);
     assert.doesNotMatch(await page.evaluate(() => document.cookie), /_gcl_au=/);
     await other.waitForFunction(() => !!window.__gaCalls && window.__gaCalls.find(a => a[0] === 'config')?.[2]?.allow_google_signals === false);
@@ -258,8 +264,52 @@ try {
     assert.equal(await page.evaluate(() => document.cookie), '');
   });
 
-  await check('Banner fits mobile and desktop in all three languages, with equally sized accept/refuse controls', async () => {
-    for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 1000 }]) {
+  await check('Customize does not grant consent; audience depends on analytics; saved choices persist', async () => {
+    const { page, google } = await setup();
+    await page.goto(root);
+    await page.locator('[data-aac-customize]').click();
+    assert.equal(google.length, 0);
+    assert.equal(await page.locator('[data-aac-analytics-choice]').isChecked(), false);
+    assert.equal(await page.locator('[data-aac-audience-choice]').isEnabled(), false);
+    await page.locator('[data-aac-analytics-choice]').check();
+    await page.locator('[data-aac-audience-choice]').check();
+    await page.locator('[data-aac-analytics-choice]').uncheck();
+    assert.equal(await page.locator('[data-aac-audience-choice]').isChecked(), false);
+    await page.locator('[data-aac-save]').click();
+    assert.equal(google.length, 0);
+    await page.locator('.aac-privacy-footer button').click();
+    await page.locator('[data-aac-analytics-choice]').check();
+    await page.locator('[data-aac-audience-choice]').check();
+    await page.locator('[data-aac-save]').click();
+    await page.waitForFunction(() => !!window.__gaCalls);
+    assert.equal((await calls(page)).find(a => a[0] === 'config')[2].allow_google_signals, true);
+    await page.locator('.aac-privacy-footer button').click();
+    assert.equal(await page.locator('[data-aac-audience-choice]').isChecked(), true);
+    await page.locator('[data-aac-audience-choice]').uncheck();
+    await page.locator('[data-aac-close]').click();
+    assert.equal((await calls(page)).find(a => a[0] === 'config')[2].allow_google_signals, true);
+    await page.locator('.aac-privacy-footer button').click();
+    assert.equal(await page.locator('[data-aac-audience-choice]').isChecked(), true);
+  });
+
+  await check('Existing valid choices are preserved without new permission', async () => {
+    for (const [accepted, audience] of [[false, false], [true, false], [true, true]]) {
+      const { page } = await setup();
+      await page.goto(root);
+      await page.evaluate(({ key, accepted, audience }) => localStorage.setItem(key,
+        JSON.stringify({ version: 2, accepted, audience, at: Date.now() })), { key, accepted, audience });
+      await page.reload();
+      assert.equal(await page.locator('.aac-consent').isVisible(), false);
+      if (accepted) {
+        await page.waitForFunction(() => !!window.__gaCalls);
+        assert.equal((await calls(page)).find(a => a[0] === 'config')[2].allow_google_signals, audience);
+      } else assert.equal(await page.evaluate(() => typeof window.gtag), 'undefined');
+    }
+  });
+
+  await check('Compact banner fits all languages and sizes; accept/refuse equal, settings readable and scrollable', async () => {
+    for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 },
+      { width: 600, height: 800 }, { width: 1440, height: 1000 }]) {
       const { page } = await setup({ viewport });
       await page.goto(root);
       for (const lang of ['fr', 'en', 'ru']) {
@@ -270,24 +320,29 @@ try {
             .filter(image => {
               const box = image.getBoundingClientRect();
               return box.width > 0 && box.height > 0 && box.top < innerHeight && box.bottom > 0;
-            })
-            .map(image => image.decode().catch(() => {})));
-          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            }).map(image => image.decode().catch(() => {})));
         });
         const panel = await page.locator('.aac-consent').boundingBox();
         assert.ok(panel.x >= 0 && panel.x + panel.width <= viewport.width);
         assert.ok(panel.y >= 0 && panel.y + panel.height <= viewport.height);
-        const a = await page.locator('[data-aac-accept]').boundingBox();
+        assert.ok(panel.height <= 235, `Compact height: ${panel.height} at ${viewport.width}/${lang}`);
+        const a = await page.locator('[data-aac-audience]').boundingBox();
         const r = await page.locator('[data-aac-reject]').boundingBox();
-        assert.equal(a.width, r.width);
+        assert.ok(Math.abs(a.width - r.width) < 1);
         assert.equal(a.height, r.height);
-        const audience = await page.locator('[data-aac-audience]').boundingBox();
-        assert.equal(audience.height, a.height);
-        assert.ok(Math.abs(audience.width - a.width) < 1);
-        await page.locator('.aac-consent details').evaluate(el => { el.open = true; });
-        assert.equal(await page.locator('.aac-consent a[href="https://myactivity.google.com/"]').isVisible(), true);
+        assert.ok(a.height >= 44);
+        if (viewport.width <= 600) assert.equal(a.y, r.y);
+        assert.equal(await page.locator('[data-aac-preferences]').isVisible(), false);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
         await page.screenshot({ path: `${process.env.TEST_SCREENSHOT_DIR || '/tmp'}/consent-${viewport.width}-${lang}.png`, animations: 'disabled' });
+        await page.locator('[data-aac-customize]').click();
+        assert.equal(await page.locator('[data-aac-customize]').getAttribute('aria-expanded'), 'true');
+        await page.locator('.aac-consent details').evaluate(el => { el.open = true; });
+        await page.locator('.aac-consent a[href="https://myactivity.google.com/"]').scrollIntoViewIfNeeded();
+        assert.equal(await page.locator('.aac-consent a[href="https://myactivity.google.com/"]').isVisible(), true);
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        await page.screenshot({ path: `${process.env.TEST_SCREENSHOT_DIR || '/tmp'}/consent-settings-${viewport.width}-${lang}.png`, animations: 'disabled' });
+        await page.reload();
       }
     }
   });
